@@ -1,6 +1,12 @@
 <b><strong>{{title}}</strong></b>
-{% if RF_subject %}
-<b><strong>{{ RF_subject }}</strong></b>
-{% endif %}
+
+{% if country %}Страна: <b><strong>{{ country }}</strong></b>{% endif %}
+{% if region %}Регион: <b><strong>{{ region }}</strong></b>{% endif %}
+{% if RF_subject %}Субъект РФ: <b><strong>{{ RF_subject }}</strong></b>{% endif %}
+{% if river %}Река: <b><strong>{{ river }}</strong></b>{% endif %}
+{% if height %}Высота: <b><strong>{{ height }}</strong></b>{% endif %}
+{% if width %}Ширина: <b><strong>{{ width }}</strong></b>{% endif %}
+<a href="{{url}}">Больше информации о водопаде</a>
+
 
 
