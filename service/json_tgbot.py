@@ -12,18 +12,6 @@ env = Environment(
 
 message = env.get_template("message.html")
 
-MESSAGE_TEMPLATE2 = """
-        <b><strong>{0}</strong></b>
-
-{{% if waterfall.title %}} Страна: <b><strong>{1}</strong></b>
-Регион: <b><strong>{2}</strong></b>
-Субъект РФ: <b><strong>{3}</strong></b>
-Река: <b><strong>{4}</strong></b>
-Высота: <b><strong>{5}</strong></b>
-Ширина: <b><strong>{6}</strong></b>
-<a href="{7}">Больше информации о водопаде</a>
- """
-
 GREET_TEPMPLATE = """
 Привет!
 Я помогу тебе найти водопад :)
@@ -43,7 +31,16 @@ def convert_to_messages(response: dict) -> list[str]:
     limit = 10
     for result_num, waterfall_str in enumerate(response, start=1):
         waterfall = WaterfallModel(**waterfall_str)
-        msg = message.render(title=waterfall.title, RF_subject=waterfall.RF_subject)
+        msg = message.render(
+            title=waterfall.title,
+            country=waterfall.country,
+            region=waterfall.region,
+            RF_subject=waterfall.RF_subject,
+            river=waterfall.river,
+            height=waterfall.height,
+            width=waterfall.width,
+            url=waterfall.url,
+            )
         # msg = MESSAGE_TEMPLATE.(
         #     waterfall.title,
         #     waterfall.country,
