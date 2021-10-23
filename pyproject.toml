@@ -12,6 +12,8 @@ python-telegram-bot = "^13.7"
 PySocks = "^1.7.1"
 flake8 = "^4.0.1"
 mypy = "^0.910"
+pydantic = "^1.8.2"
+Jinja2 = "^3.0.2"
 
 [tool.poetry.dev-dependencies]
 

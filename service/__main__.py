@@ -1,8 +1,9 @@
 import logging
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
-import httpx
 import service.config
-
+from service.client import BackendClient as Client
+from service.json_tgbot import convert_to_messages, greet
+from telegram import ParseMode
 
 logging.basicConfig(format='%(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO,
@@ -18,74 +19,38 @@ PROXY = {
 
 
 def greet_user(update, context):
-    update.message.reply_text(
-        'Привет! Я помогу тебе найти водопад!\n \
-        Если знаешь название водопада, отправь мне его в формате:\n \
-        /name "название"\n \
-        Или же давай попробуем найти водопад по описанию:\n \
-        /description "то, что ты знаешь о водопаде"'
+    update.message.reply_text(greet())
+
+
+def search_by_name(update, context):
+    if context.args:
+        client = Client()
+        text = update.message.text
+        title = text.replace('/name ', '')
+        detail = None
+        response = client.search(detail, title)
+        tm_messages = convert_to_messages(response)
+        if not tm_messages:
+            update.message.reply_text('Такого водопада я не знаю!')
+        for msg in tm_messages:
+            update.message.reply_text(text=msg, parse_mode=ParseMode.HTML)
+    else:
+        update.message.reply_text(
+            'Напиши мне какой водопад ты хочешь найти!',
         )
 
 
-def get_waterfalls_by_name(update, context):
-    text = update.message.text
-    text = text.replace('/name ', '')
-    logging.info(text)
-    title = text
-    detail = None
-    waterfall = httpx.get(f'http://127.0.0.1:5000/api/v1/waterfalls?detail={detail}&title={title}')
-    waterfalls = waterfall.json()
-    if waterfalls:
-        for waterfall in waterfalls:
-            update.message.reply_text(
-                str(
-                    f'Название: {waterfall.get("title", "")}\n \
-Страна: {waterfall.get("country", "")}\n \
-Регион: {waterfall.get("region", "")}\n \
-Субъект РФ: {waterfall.get("RF_subject", "")}\n \
-Река: {waterfall.get("river", "")}\n \
-Высота: {waterfall.get("height", "")}\n \
-Ширина: {waterfall.get("width", "")}\n \
-{waterfall["url"]}'
-                ))
+def search_by_desc(update, context):
 
-    else:
-        update.message.reply_text(str('Такого водопада я не знаю :('))
-
-
-def get_waterfalls_by_desc(update, context):
-    text = update.message.text
-    text = text.replace('/description ', '')
-    logging.info(text)
+    client = Client()
+    detail = update.message.text
     title = None
-    detail = text
-    waterfall = httpx.get(f'http://127.0.0.1:5000/api/v1/waterfalls?detail={detail}&title={title}')
-    waterfalls = waterfall.json()
-    if waterfalls:
-        for waterfall in waterfalls:
-            update.message.reply_text(
-                str(
-                    f'Название: {waterfall.get("title", "")}\n \
-Страна: {waterfall.get("country", "")}\n \
-Регион: {waterfall.get("region", "")}\n \
-Субъект РФ: {waterfall.get("RF_subject", "")}\n \
-Река: {waterfall.get("river", "")}\n \
-Высота: {waterfall.get("height", "")}\n \
-Ширина: {waterfall.get("width", "")}\n \
-{waterfall["url"]}'
-                ))
-    else:
-        update.message.reply_text(str('Попробуй немного изменить описание :)'))
-
-
-def default_response(update, context):
-    update.message.reply_text(
-        'Привет! Я помогу тебе найти водопад!\n \
-        Если знаешь название водопада, отправь мне его в формате:\n \
-        /name "название"\n \
-        Или же давай попробуем найти водопад по описанию:\n \
-        /description "то, что ты знаешь о водопаде"'
-        )
+    response = client.search(detail, title)
+    tm_messages = convert_to_messages(response)
+    if not tm_messages:
+        update.message.reply_text('Такого водопада я не знаю!')
+    for msg in tm_messages:
+        update.message.reply_text(text=msg, parse_mode=ParseMode.HTML)
 
 
 def main():
@@ -96,11 +61,10 @@ def main():
                     )
     dp = mybot.dispatcher
     dp.add_handler(CommandHandler("start", greet_user))
-    dp.add_handler(CommandHandler("name", get_waterfalls_by_name))
-    dp.add_handler(CommandHandler("description", get_waterfalls_by_desc))
-    dp.add_handler(MessageHandler(Filters.text, default_response))
+    dp.add_handler(CommandHandler("name", search_by_name))
+    dp.add_handler(MessageHandler(Filters.text, search_by_desc))
 
-    mybot.start_polling()
+    mybot.start_polling(timeout=600)
     mybot.idle()
 
 
