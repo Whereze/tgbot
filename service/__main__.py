@@ -44,7 +44,7 @@ def search_by_desc(update, context):
 
     client = Client()
     detail = update.message.text
-    title = None
+    title = update.message.text
     response = client.search(detail, title)
     tm_messages = convert_to_messages(response)
     if not tm_messages:
