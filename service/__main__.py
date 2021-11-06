@@ -4,6 +4,7 @@ import service.config
 from service.client import BackendClient as Client
 from service.json_tgbot import convert_to_messages, greet
 from telegram import ParseMode
+from service.fasttext.model import FasttextModel
 
 logging.basicConfig(format='%(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO,
@@ -53,6 +54,25 @@ def search_by_desc(update, context):
         update.message.reply_text(text=msg, parse_mode=ParseMode.HTML)
 
 
+def search_by_fasttext(update, context):
+    if context.args:
+        client = Client()
+        text = update.message.text
+        title = text.replace('/fasttext ', '')
+        detail = None
+        title = FasttextModel().predict_result(title)
+        response = client.search(detail, title)
+        tm_messages = convert_to_messages(response)
+        if not tm_messages:
+            update.message.reply_text('Такого водопада я не знаю!')
+        for msg in tm_messages:
+            update.message.reply_text(text=msg, parse_mode=ParseMode.HTML)
+    else:
+        update.message.reply_text(
+            'Напиши мне какой водопад ты хочешь найти!',
+        )
+
+
 def main():
     mybot = Updater(
                     service.config.TOKEN,
@@ -62,6 +82,7 @@ def main():
     dp = mybot.dispatcher
     dp.add_handler(CommandHandler("start", greet_user))
     dp.add_handler(CommandHandler("name", search_by_name))
+    dp.add_handler(CommandHandler("fasttext", search_by_fasttext))
     dp.add_handler(MessageHandler(Filters.text, search_by_desc))
 
     mybot.start_polling(timeout=600)
