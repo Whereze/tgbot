@@ -2,9 +2,11 @@ import pandas as pd
 
 
 class WaterfallFile:
+    def __init__(self, filepath):
+        self.filepath = filepath
 
-    def preprocess(self, filepath):
-        df = pd.read_csv(filepath, sep=";")
+    def preprocess(self):
+        df = pd.read_csv(self.filepath, sep=";")
         df['norm_text'] = df.summary.map(lambda x: x.replace('«', ' '))
         df['norm_text'] = df.norm_text.map(lambda x: x.replace('»', ' '))
         df['norm_text'] = df.norm_text.map(lambda x: x.replace('/', ' '))

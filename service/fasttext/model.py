@@ -7,23 +7,24 @@ from pathlib import Path
 
 
 class FasttextModel():
-    model_path = Path('service') / 'fasttext' / 'wiki.ru.bin'
+    model_path = Path('models') / 'fasttext' / 'wiki.ru.bin'
     csv_path = Path('service') / 'fasttext' / 'waterfalls_fasttext.csv'
 
-    fasttext_model = fasttext.load_model('service/fasttext/wiki.ru.bin')
+    fasttext_model = fasttext.load_model(str(model_path))
+    preprocessor = WaterfallFile(csv_path)
 
     def cos_similarity(self, data1, data2):
         stop = stopwords.words('russian')
         sent1_emb = np.mean(
                                 [
-                                    FasttextModel().fasttext_model[x]
+                                    self.fasttext_model[x]
                                     for word in data1 for x in word.split()
                                     if x not in stop
                                 ], axis=0
                             )
         sent2_emb = np.mean(
                                 [
-                                    FasttextModel().fasttext_model[x]
+                                    self.fasttext_model[x]
                                     for word in data2 for x in word.split()
                                     if x not in stop
                                 ], axis=0
@@ -34,11 +35,11 @@ class FasttextModel():
     def predict_result(self, user_text):
         max_index = 0
         max_similarity = 0
-        waterfall = WaterfallFile().preprocess(FasttextModel().csv_path)
+        waterfall = self.preprocessor.preprocess()
         for index, row in waterfall.iterrows():
-            if FasttextModel().cos_similarity(
+            if self.cos_similarity(
                     row['norm_text'], user_text) > max_similarity:
-                max_similarity = FasttextModel().cos_similarity(
+                max_similarity = self.cos_similarity(
                     row['norm_text'], user_text)
                 max_index = index
         return waterfall.iloc[max_index]['title'], max_similarity
